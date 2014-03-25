@@ -26,9 +26,11 @@ public class XYChartData extends ApplicationFrame {
 		final XYSeries s1 = new XYSeries("Direct");
 		final XYSeries s2 = new XYSeries("Reflection");
 
-		for (int i = 1; i < data1.size(); i++) {
-			s1.add(i, data1.get(i));
-			s2.add(i, data2.get(i));
+		for (int i = 0; i < data1.size() - 1; i++) {
+			if(data1.get(i) - data1.get(i+1) <= 5){
+				s1.add(i, data1.get(i));
+				s2.add(i, data2.get(i));
+			}
 		}
 
 		final XYSeriesCollection dataset = new XYSeriesCollection();

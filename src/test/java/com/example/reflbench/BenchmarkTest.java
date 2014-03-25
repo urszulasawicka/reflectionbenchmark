@@ -15,9 +15,14 @@ public class BenchmarkTest {
 	private TestClass tc;
 	private static final int counter = 10000;
 	private static final int smallCounter = 100;
+	private Long start, stop;
+	private List<Double> data1 = new ArrayList<Double>();
+	private List<Double> data2 = new ArrayList<Double>();
+	private Field stringFld;
+	private Field intFld;
 
 	@Before
-	public void initTest() {
+	public void initTest() throws NoSuchFieldException, SecurityException {
 		tc = new TestClass(90, "Ula");
 		for (int i = 0; i < counter; i++) {
 			tc.stringValue = "Kasia";
@@ -26,6 +31,8 @@ public class BenchmarkTest {
 			tc.setStringPrivateValue("Kasia");
 			tc.sayHello();
 		}
+		data1.clear();
+		data2.clear();
 	}
 
 	@After
@@ -33,12 +40,16 @@ public class BenchmarkTest {
 		tc = null;
 	}
 
+	private void getChart(final String title) {
+		final XYChartData publicValuesSet = new XYChartData(title, data1, data2);
+		publicValuesSet.pack();
+		RefineryUtilities.centerFrameOnScreen(publicValuesSet);
+		publicValuesSet.setVisible(true);
+	}
+
 	@Test
-	public void publicFieldTest() throws NoSuchFieldException,
+	public void publicFieldSetTest() throws NoSuchFieldException,
 			SecurityException, IllegalArgumentException, IllegalAccessException {
-		Long start, stop;
-		List<Double> data1 = new ArrayList<Double>();
-		List<Double> data2 = new ArrayList<Double>();
 
 		for (int j = 0; j < smallCounter; j++) {
 			start = System.currentTimeMillis();
@@ -50,8 +61,8 @@ public class BenchmarkTest {
 			data1.add((double) stop);
 		}
 
-		Field stringFld = TestClass.class.getDeclaredField("stringValue");
-		Field intFld = TestClass.class.getDeclaredField("intValue");
+		stringFld = TestClass.class.getDeclaredField("stringValue");
+		intFld = TestClass.class.getDeclaredField("intValue");
 		for (int j = 0; j < smallCounter; j++) {
 			start = System.currentTimeMillis();
 			for (int i = 0; i < counter; i++) {
@@ -61,72 +72,154 @@ public class BenchmarkTest {
 			stop = System.currentTimeMillis() - start;
 			data2.add((double) stop);
 		}
-		final XYChartData publicValues = new XYChartData("Public values",
-				data1, data2);
-		publicValues.pack();
-		RefineryUtilities.centerFrameOnScreen(publicValues);
-		publicValues.setVisible(true);
 
-		int intFldValue = 0;
-		String stringFldValue = new String();
-		start = System.currentTimeMillis();
-		for (int i = 0; i < counter; i++) {
-			intFldValue = (int) intFld.get(tc);
-			stringFldValue = (String) stringFld.get(tc);
-		}
-		stop = System.currentTimeMillis() - start;
+		getChart("Public values - set");
 	}
 
 	@Test
-	public void privateFieldTest() throws NoSuchFieldException,
+	public void publicFieldGetTest() throws NoSuchFieldException,
 			SecurityException, IllegalArgumentException, IllegalAccessException {
-		Long start = System.currentTimeMillis();
-		for (int i = 0; i < counter; i++) {
-			tc.setIntPrivateValue(89);
-			tc.setStringPrivateValue("Kasia");
-		}
-		Long stop = System.currentTimeMillis() - start;
 
-		Field stringFld = TestClass.class
-				.getDeclaredField("stringPrivateValue");
-		Field intFld = TestClass.class.getDeclaredField("intPrivateValue");
+		int temp;
+		String temp1;
+		for (int j = 0; j < smallCounter; j++) {
+			start = System.currentTimeMillis();
+			for (int i = 0; i < counter; i++) {
+				temp = tc.intValue;
+				temp1 = tc.stringValue;
+			}
+			stop = System.currentTimeMillis() - start;
+			data1.add((double) stop);
+		}
+
+		stringFld = TestClass.class.getDeclaredField("stringValue");
+		intFld = TestClass.class.getDeclaredField("intValue");
+		for (int j = 0; j < smallCounter; j++) {
+			start = System.currentTimeMillis();
+			for (int i = 0; i < counter; i++) {
+				intFld.get(tc);
+				stringFld.get(tc);
+			}
+			stop = System.currentTimeMillis() - start;
+			data2.add((double) stop);
+		}
+
+		getChart("Public values - get");
+	}
+
+	@Test
+	public void privateFieldSetTest() throws NoSuchFieldException,
+			SecurityException, IllegalArgumentException, IllegalAccessException {
+
+		for (int j = 0; j < smallCounter; j++) {
+			start = System.currentTimeMillis();
+			for (int i = 0; i < counter; i++) {
+				tc.setIntPrivateValue(89);
+				tc.setStringPrivateValue("Kasia");
+			}
+			stop = System.currentTimeMillis() - start;
+			data1.add((double) stop);
+		}
+
+		stringFld = TestClass.class.getDeclaredField("stringPrivateValue");
+		intFld = TestClass.class.getDeclaredField("intPrivateValue");
 		stringFld.setAccessible(true);
 		intFld.setAccessible(true);
-		start = System.currentTimeMillis();
-		for (int i = 0; i < counter; i++) {
-			stringFld.set(tc, "Zosia");
-			intFld.set(tc, 87);
+		for (int j = 0; j < smallCounter; j++) {
+			start = System.currentTimeMillis();
+			for (int i = 0; i < counter; i++) {
+				stringFld.set(tc, "Zosia");
+				intFld.set(tc, 87);
+			}
+			stop = System.currentTimeMillis() - start;
+			data2.add((double) stop);
 		}
-		stop = System.currentTimeMillis() - start;
+		getChart("Private values - set");
+	}
 
-		int intFldValue = 0;
-		String stringFldValue = new String();
-		start = System.currentTimeMillis();
-		for (int i = 0; i < counter; i++) {
-			intFldValue = (int) intFld.get(tc);
-			stringFldValue = (String) stringFld.get(tc);
+	@Test
+	public void privateFieldGetTest() throws NoSuchFieldException,
+			SecurityException, IllegalArgumentException, IllegalAccessException {
+
+		for (int j = 0; j < smallCounter; j++) {
+			start = System.currentTimeMillis();
+			for (int i = 0; i < counter; i++) {
+				tc.getIntPrivateValue();
+				tc.getStringPrivateValue();
+			}
+			stop = System.currentTimeMillis() - start;
+			data1.add((double) stop);
 		}
-		stop = System.currentTimeMillis() - start;
+
+		stringFld = TestClass.class.getDeclaredField("stringPrivateValue");
+		intFld = TestClass.class.getDeclaredField("intPrivateValue");
+		stringFld.setAccessible(true);
+		intFld.setAccessible(true);
+
+		for (int j = 0; j < smallCounter; j++) {
+			start = System.currentTimeMillis();
+			for (int i = 0; i < counter; i++) {
+				intFld.get(tc);
+				stringFld.get(tc);
+			}
+			stop = System.currentTimeMillis() - start;
+			data2.add((double) stop);
+		}
+		getChart("Private values - get");
 	}
 
 	@Test
 	public void methodTest() throws IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException,
 			NoSuchMethodException, SecurityException {
-		tc.stringValue = "Ula";
-		Long start = System.currentTimeMillis();
-		String hey = new String();
-		for (int i = 0; i < counter; i++) {
-			hey = tc.sayHello();
-		}
-		Long stop = System.currentTimeMillis() - start;
 
-		start = System.currentTimeMillis();
-		hey = new String();
-		for (int i = 0; i < counter; i++) {
-			hey = (String) TestClass.class.getMethod("sayHello", null).invoke(
-					tc, null);
+		for (int j = 0; j < smallCounter; j++) {
+			start = System.currentTimeMillis();
+			for (int i = 0; i < counter; i++) {
+				tc.sayHello();
+			}
+
+			stop = System.currentTimeMillis() - start;
+			data1.add((double) stop);
 		}
-		stop = System.currentTimeMillis() - start;
+
+		for (int j = 0; j < smallCounter; j++) {
+			start = System.currentTimeMillis();
+			for (int i = 0; i < counter; i++) {
+				TestClass.class.getMethod("sayHello", null).invoke(tc, null);
+			}
+			stop = System.currentTimeMillis() - start;
+			data2.add((double) stop);
+		}
+		getChart("Method");
+	}
+
+	@Test
+	public void methodInterfaceTest() throws IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException,
+			NoSuchMethodException, SecurityException {
+
+		TestInterface ti = new TestClass(90, "Ula");
+		for (int j = 0; j < smallCounter; j++) {
+			start = System.currentTimeMillis();
+			for (int i = 0; i < counter; i++) {
+				ti.sayHello();
+			}
+
+			stop = System.currentTimeMillis() - start;
+			data1.add((double) stop);
+		}
+
+		for (int j = 0; j < smallCounter; j++) {
+			start = System.currentTimeMillis();
+			for (int i = 0; i < counter; i++) {
+				TestClass.class.getMethod("sayHello", null).invoke(tc, null);
+			}
+			stop = System.currentTimeMillis() - start;
+			data2.add((double) stop);
+		}
+		
+		getChart("Method - interface");
+
 	}
 }
